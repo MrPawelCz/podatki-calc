@@ -30,8 +30,9 @@ Obliczenia opierają się na aktualnych przepisach i oficjalnych komunikatach MF
 Wymagane Node 22+ i Python 3 do lokalnego serwera; brak zależności produkcyjnych, frameworka i procesu budowania.
 
 ```sh
+npm ci
 npm test
 npm run serve
 ```
 
-Serwer lokalny: `http://127.0.0.1:8766/`. Statyczne pliki mogą być hostowane na GitHub Pages. Testy zawierają niezależne ręczne przypadki PIT i ZUS oraz regresje granic i zaokrągleń. Przed każdą zmianą parametrów podatkowych należy ponownie zweryfikować źródła i datę obowiązywania.
+Serwer lokalny: `http://127.0.0.1:8766/`. Statyczne pliki mogą być hostowane na GitHub Pages. Testy zawierają niezależne ręczne przypadki PIT i ZUS, regresje granic i zaokrągleń oraz testy interakcji formularza w lokalnym DOM (jsdom jest wyłącznie zależnością developerską). Przed każdą zmianą parametrów podatkowych należy ponownie zweryfikować źródła i datę obowiązywania.
