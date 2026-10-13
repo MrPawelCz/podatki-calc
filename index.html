@@ -5,18 +5,17 @@
   <meta name="theme-color" content="#f3f5f4">
   <meta name="description" content="Porównaj skalę podatkową, podatek liniowy i ryczałt w 2026 roku. Kilka przychodów, koszty, ulgi ZUS i przejrzyste obliczenia.">
   <title>Podatki Calc — Twoja działalność, w liczbach</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css?v=1.2.0">
-  <script type="module" src="app.js?v=1.2.0"></script>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css?v=1.2.1">
+  <script type="module" src="app.js?v=1.2.1"></script>
 </head>
 <body>
 <a class="skip" href="#results">Przejdź do porównania</a>
 <div class="container">
   <header>
     <a class="brand" href="./" aria-label="Podatki Calc — strona główna"><img src="favicon.svg" width="42" height="42" alt=""><span><span class="brand-title">Podatki Calc <span class="badge">PL · 2026</span></span><span class="subtitle">Twoja działalność, w liczbach.</span></span></a>
-    <nav aria-label="Narzędzia kalkulatora"><button id="example">Przykład</button><button id="share">Udostępnij</button><button id="save">Zapisz na urządzeniu</button><button id="print">PDF / drukuj</button><button id="reset" class="quiet">Wyczyść</button></nav>
+    <nav aria-label="Narzędzia kalkulatora"><button id="example">Przykład</button><button id="share">Udostępnij</button><button id="save">Zapisz na urządzeniu</button><button id="print">PDF / drukuj</button><button id="reset" class="quiet">Wyczyść</button><a href="#methodology" class="nav-help">Zasady i źródła</a></nav>
   </header>
-  <p id="status" class="status" role="status" aria-atomic="true"></p>
-  <div class="workspace-title"><p>Porównaj, ile zostanie w Twojej firmie.</p><a href="#methodology">Zasady i źródła</a></div>
+  <div id="status-toast" class="status-toast" hidden><p id="status" class="status" role="status" aria-atomic="true"></p><button id="status-dismiss" aria-label="Zamknij komunikat">×</button></div>
   <div class="mobile-results" aria-label="Szybki dostęp do wyniku"><span id="mobile-summary">Wpisz przychód, aby porównać podatki</span><a href="#results" id="mobile-results-link">Porównanie <span aria-hidden="true">↓</span></a></div>
   <main class="workspace">
     <section id="inputs" class="inputs panel" aria-labelledby="inputs-heading" tabindex="-1">
@@ -95,7 +94,7 @@
     </section>
   </main>
   <details id="methodology" class="panel methodology"><summary><span>Zasady, aktualność i źródła</span><span class="badge">Sprawdzono 13.10.2026</span></summary><div id="method-content"></div></details>
-  <footer><span>Podatki Calc · v1.2.0 · Polska, 2026</span><a href="https://github.com/MrPawelCz/podatki-calc" target="_blank" rel="noopener noreferrer">Kod i dokumentacja</a><a href="https://mrpawelcz.github.io/btl-calc/" target="_blank" rel="noopener noreferrer">BTL Calculator</a></footer>
+  <footer><span>Podatki Calc · v1.2.1 · Polska, 2026</span><a href="https://github.com/MrPawelCz/podatki-calc" target="_blank" rel="noopener noreferrer">Kod i dokumentacja</a><a href="https://mrpawelcz.github.io/btl-calc/" target="_blank" rel="noopener noreferrer">BTL Calculator</a></footer>
 </div>
 <dialog id="share-dialog" aria-labelledby="share-title" aria-describedby="share-description">
   <h2 id="share-title">Udostępnij swoje porównanie</h2>

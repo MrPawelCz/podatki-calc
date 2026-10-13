@@ -24,7 +24,24 @@ try{
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
   await check('application starts without JavaScript errors',async()=>{await page.locator('#recommendation').waitFor();assert.deepEqual(pageErrors,[]);});
   await check('empty form does not declare a winning tax form',async()=>{assert.equal(await page.locator('.tax-card.best').count(),0);});
-  await page.locator('#example').click();
+  await check('status notifications do not move the form and can be dismissed',async()=>{
+    const initial=await page.locator('#inputs').boundingBox();
+    await page.locator('#example').click();
+    const after=await page.locator('#inputs').boundingBox();assert.equal(after.y,initial.y);
+    assert.equal(await page.locator('.workspace-title').count(),0);
+    await page.locator('#save').click();assert.equal((await page.locator('#inputs').boundingBox()).y,initial.y);
+    assert.equal(await page.locator('#status-toast').isVisible(),true);
+    await page.locator('#status-dismiss').click();assert.equal(await page.locator('#status-toast').isVisible(),false);
+    assert.equal((await page.locator('#inputs').boundingBox()).y,initial.y);
+  });
+  await check('default eligibility explanation is in details and monetary shortfalls are red and bold',async()=>{
+    assert.equal(await page.locator('#priority-warnings').textContent(),'');
+    assert.equal(await page.locator('#assumptions').evaluate(el=>el.open),false);
+    assert.match(await page.locator('#warnings').textContent(),/Nie sprawdza, czy możesz/);
+    assert.equal(await page.locator('.difference-loss').count(),2);
+    const differences=await page.locator('.difference-loss').evaluateAll(elements=>elements.map(el=>({text:el.textContent,color:getComputedStyle(el).color,weight:Number(getComputedStyle(el).fontWeight)})));
+    assert.ok(differences.every(d=>d.text.includes('mniej zostaje')&&d.color==='rgb(152, 63, 53)'&&d.weight>=700));
+  });
   await check('published example equals tested engine output',async()=>{
     const expected=calculate(example()).results.map(r=>r.net);
     const actual=(await page.locator('.net-value').allTextContents()).map(s=>Number(s.replace(/\s|zł/g,'').replace(',','.')));

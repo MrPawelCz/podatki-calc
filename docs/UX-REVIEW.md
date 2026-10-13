@@ -43,3 +43,13 @@ The frontend-design skill guided a restrained revision of the existing identity 
 - Screenshots are temporary review artifacts outside the public repository. No private financial figures are included.
 
 Public-browser verification after deployment remains separate from local markup verification; see the release testing record for the delivered version.
+
+## User-directed simplification — v1.2.1
+
+On 2026-10-13 the user found the default eligibility banner confusing and the header status area disruptive. This revision keeps the eligibility model and exclusions unchanged while adjusting presentation:
+
+- The general explanation of unverified rights to linear/lump-sum taxation lives in the existing collapsed assumptions. Cards use the actionable “Sprawdź warunki” link instead of the ambiguous “Warunkowo” label. Scenario-specific numerical errors and material warnings are retained.
+- The extra tagline row below the header is removed. The sources link is in the header navigation. Nonblocking action confirmations use a dismissible fixed notification, above the mobile result dock, without shifting the form; normal confirmations disappear after ten seconds. Corrupt-link feedback persists until dismissed.
+- Every actual monetary “mniej zostaje” line is red and bold. Empty placeholders, excluded forms and near-tie descriptions keep neutral styling.
+
+These are presentation changes, not changes to tax calculations, eligibility rules or shared-link data.

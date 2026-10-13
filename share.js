@@ -1,4 +1,4 @@
-import {validate} from './calculator.js?v=1.1.0';
+import {validate} from './calculator.js?v=1.2.1';
 
 // Public link format v1. Keep this snapshot and these keys unchanged when the
 // application's defaults evolve; a future format needs its own version.

@@ -1,5 +1,5 @@
-import {calculate,defaults,example,parseAmount,annual,getPlan,smallZus,zusMonth,MONTHS,MODES,C,RATES} from './calculator.js?v=1.1.0';
-import {encodeShare,decodeShare} from './share.js?v=1.2.0';
+import {calculate,defaults,example,parseAmount,annual,getPlan,smallZus,zusMonth,MONTHS,MODES,C,RATES} from './calculator.js?v=1.2.1';
+import {encodeShare,decodeShare} from './share.js?v=1.2.1';
 import {RATE_GUIDE,guideIntro} from './rates.js?v=1.2.0';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,11 +12,17 @@ let state=defaults(),lastResult,showZero=false;
 const numeric={ 'start-months':'startMonths','accident':'accident','prev-revenue':'prevRevenue','prev-income':'prevIncome','prev-days':'prevDays','other-income':'otherIncome','spouse-income':'spouseIncome','deduction':'deduction','paid-linear':'paidLinear','paid-lump':'paidLump','card-tax':'cardTax' };
 const selects={'zus-mode':'zusMode','prev-form':'prevForm','holiday':'holiday','health-treatment':'healthTreatment','linear-eligibility':'linearEligibility','lump-eligibility':'lumpEligibility'};
 const checks={'sickness':'sickness','fp-exempt':'fpExempt','small-eligible':'smallEligible','joint':'joint','paid-override':'paidOverride','card-enabled':'cardEnabled'};
-function status(text){$('status').textContent=text;}
+let statusTimer,statusFocus;
+function status(text,persistent=false){
+ clearTimeout(statusTimer);statusFocus=document.activeElement;
+ $('status').textContent=text;$('status-toast').hidden=!text;
+ if(text&&!persistent)statusTimer=setTimeout(()=>{if(!$('status-toast').contains(document.activeElement))$('status-toast').hidden=true;},10000);
+}
+$('status-dismiss').addEventListener('click',()=>{clearTimeout(statusTimer);$('status-toast').hidden=true;(statusFocus?.isConnected&&statusFocus!==document.body?statusFocus:$('inputs')).focus({preventScroll:true});});
 function clearSharedAddress(){if(location.hash.startsWith('#scenario')){history.replaceState(null,'',location.pathname+location.search);status('Zmieniono dane z linku. Aby udostępnić aktualną wersję, ponownie wybierz „Udostępnij”.');}}
 function loadShared(){
  try{const shared=decodeShare(location.hash);if(!shared)return false;state=shared.state;showZero=shared.showZero;status('Wczytano dane z udostępnionego linku. Nie zmieniono Twojego zapisu na urządzeniu.');}
- catch{state=defaults();showZero=false;status('Nie można odczytać danych z linku: jest uszkodzony albo pochodzi z nieobsługiwanej wersji. Wyświetlamy pusty formularz; Twój zapis na urządzeniu pozostaje bez zmian.');}
+ catch{state=defaults();showZero=false;status('Nie można odczytać danych z linku: jest uszkodzony albo pochodzi z nieobsługiwanej wersji. Wyświetlamy pusty formularz; Twój zapis na urządzeniu pozostaje bez zmian.',true);}
  return true;
 }
 function reveal(id){const target=$(id);if(!target)return;let el=target;while(el){if(el.tagName==='DETAILS')el.open=true;el=el.parentElement;}const focusTarget=target.tagName==='DETAILS'?target.querySelector('summary'):target;focusTarget?.focus({preventScroll:true});target.scrollIntoView?.({block:target.matches('input,select,button')?'center':'start',behavior:'instant'});}
@@ -74,9 +80,9 @@ function resultCard(r,best,ready){
  const delta=r.burden-best.burden,tied=!excluded&&Math.abs(delta)<1;
  const rows=[['Zmiana PIT¹',r.pit],['ZUS społeczny',r.social],['Fundusz Pracy / FS',r.fp],['Zdrowotna',r.health],['Danina solidarnościowa',r.solidarity]];
  return `<article class="tax-card ${isBest?'best':''} ${excluded?'excluded':''} ${ready?'':'empty-card'}" aria-label="${r.name}${isBest?' — najniższe obciążenie w symulacji':''}">
- <div class="card-heading"><h3>${r.name}</h3>${eligibility==='unconfirmed'?`<a class="eligibility-label" href="#${eligibilityTarget}" title="${esc(r.eligibility?.reason??'Sprawdź warunki stosowania')}">Warunkowo</a>`:excluded?'<span class="eligibility-label unavailable">Poza rankingiem</span>':''}</div>
+ <div class="card-heading"><h3>${r.name}</h3>${eligibility==='unconfirmed'?`<a class="eligibility-label" href="#${eligibilityTarget}" title="${esc(r.eligibility?.reason??'Sprawdź warunki stosowania')}">Sprawdź warunki</a>`:excluded?'<span class="eligibility-label unavailable">Poza rankingiem</span>':''}</div>
  <p class="rate-label">${r.rate}</p><div class="net-label">Zostaje z JDG</div><div class="net-value ${ready&&r.net<0?'negative':''}">${ready?f(r.net):'—'}</div><div class="net-unit">${unit}</div>
- ${!ready?'<p class="difference">Wynik po wpisaniu kwot</p>':isBest?`<span class="winner">${eligibility==='unconfirmed'?'Najniższe w symulacji':'Najniższe obciążenie'}</span>`:excluded?'<p class="difference">Forma wyłączona z porównania</p>':`<p class="difference">${tied?'Wynik zbliżony do najniższego obciążenia':`${f(delta)} mniej zostaje ${divisor===12?'miesięcznie':'rocznie'}`}</p>`}
+ ${!ready?'<p class="difference">Wynik po wpisaniu kwot</p>':isBest?`<span class="winner">${eligibility==='unconfirmed'?'Najniższe w symulacji':'Najniższe obciążenie'}</span>`:excluded?'<p class="difference">Forma wyłączona z porównania</p>':`<p class="difference${tied?'':' difference-loss'}">${tied?'Wynik zbliżony do najniższego obciążenia':`${f(delta)} mniej zostaje ${divisor===12?'miesięcznie':'rocznie'}`}</p>`}
  ${ready?`<div class="card-burden"><span>Podatki i składki</span><strong>${f(r.burden)}</strong></div><details class="tax-detail" id="tax-detail-${r.id}"><summary>Składniki obciążenia</summary><dl>${rows.map(([label,value])=>`<div><dt>${label}</dt><dd>${f(value)}</dd></div>`).join('')}</dl><p class="effective">${lastResult.revenue?`${plain.format(r.effective)}% przychodu na obciążenia`:'Brak przychodu: pozostają składki'}</p>${excluded?`<p class="hint">${esc(r.eligibility?.reason??'Brak uprawnienia według Twojego wyboru.')}</p>`:''}</details>`:''}</article>`;
 }
 function renderResults(){
@@ -103,11 +109,12 @@ function renderResults(){
  }
  const openedDetails=[...$('comparison').querySelectorAll('details[open]')].map(el=>el.id);
  $('comparison').innerHTML=result.results.map(r=>resultCard(r,best,ready)).join('');openedDetails.forEach(id=>{if($(id))$(id).open=true;});
- const ordinary=result.warnings.filter(w=>w.startsWith('Szacunek')),important=result.warnings.filter(w=>!w.startsWith('Szacunek'));
- $('warnings').innerHTML=ordinary.map(w=>`<p class="notice info">${esc(w)}</p>`).join('');
+ const isBackground=w=>w.startsWith('Szacunek')||w.startsWith('Niepotwierdzona dostępność:');
+ const ordinary=result.warnings.filter(isBackground),important=result.warnings.filter(w=>!isBackground(w));
+ $('warnings').innerHTML=ordinary.map(w=>w.startsWith('Niepotwierdzona dostępność:')?'<p class="hint">Kalkulator porównuje kwoty. Nie sprawdza, czy możesz wybrać liniowy lub ryczałt — to zależy od warunków Twojej działalności. <a href="#eligibility-settings">Sprawdź warunki stosowania</a>.</p>':`<p class="notice info">${esc(w)}</p>`).join('');
  $('priority-warnings').innerHTML=ready?important.map(w=>`<p class="notice">${esc(w)}</p>`).join(''):'';
- $('assumptions').hidden=!ready||!ordinary.length;$('warnings-count').textContent='Zdrowotna i odliczenia';
- $('mobile-summary').textContent=ready?`${tie?`${best.name} / ${second.name}`:best.name}${conditional?' (warunkowo)':''} · zostaje ${f(best.net)} ${d===12?'/ mies.':'/ rok'}`:'Wpisz przychód, aby porównać podatki';
+ $('assumptions').hidden=!ready||!ordinary.length;$('warnings-count').textContent='Zdrowotna i warunki';
+ $('mobile-summary').textContent=ready?`${tie?`${best.name} / ${second.name}`:best.name} · zostaje ${f(best.net)} ${d===12?'/ mies.':'/ rok'}`:'Wpisz przychód, aby porównać podatki';
  $('mobile-results-link').href='#results';$('mobile-results-link').innerHTML='Porównanie <span aria-hidden="true">↓</span>';
  $('breakdown-period').textContent=d===12?'Średnio miesięcznie':'Rocznie';
  $('bars').innerHTML=result.results.map(r=>{const parts=[['net','Zostaje',Math.max(0,r.net)],['costs','Koszty',result.costs],['social','ZUS + FP',r.social+r.fp],['health','Zdrowotna',r.health],['tax','PIT + danina',Math.max(0,r.pit+r.solidarity)]];const total=parts.reduce((a,p)=>a+p[2],0);return `<div class="bar-row"><div class="bar-label"><span>${r.name}</span><strong>${f(r.burden)} obciążeń</strong></div><div class="bar" role="img" aria-label="${esc(parts.map(p=>`${p[1]}: ${f(p[2])}`).join(', '))}">${parts.map(p=>`<span class="${p[0]}" style="width:${total?p[2]/total*100:0}%" title="${p[1]}: ${f(p[2])}"></span>`).join('')}</div></div>`;}).join('');

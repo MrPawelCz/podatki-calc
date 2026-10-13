@@ -85,4 +85,4 @@ Brak modułu zaliczek miesięcznych, księgowania faktur, kasowego PIT, remanent
 
 ## Prywatność
 
-Bez backendu, logowania, zewnętrznych fontów i analityki. Kwoty nie opuszczają przeglądarki. Zapis scenariusza do `localStorage` wyłącznie po kliknięciu; „Wyczyść” usuwa ten zapis. GitHub Pages obsługuje standardowe żądania plików statycznych. Druk/PDF realizuje przeglądarka.
+Bez backendu, logowania, zewnętrznych fontów i analityki. Obliczenia wykonywane są w przeglądarce. Opcjonalne udostępnianie zapisuje dane w linku przekazywanym przez użytkownika. Zapis scenariusza do `localStorage` wyłącznie po kliknięciu; „Wyczyść” usuwa ten zapis. GitHub Pages obsługuje standardowe żądania plików statycznych. Druk/PDF realizuje przeglądarka.
