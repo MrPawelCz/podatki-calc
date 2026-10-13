@@ -96,10 +96,11 @@ test('MZ+ decimal half-grosz rounding is not pushed downward by binary division'
   assert.equal(mz.base, 1920.03);
 });
 
-test('MZ+ requires 60 days and the remaining eligibility conditions', () => {
+test('MZ+ requires 60 days; unconfirmed remaining conditions produce conditional simulation', () => {
   assert.equal(smallZus(settings({ prevRevenue: 10000, prevDays: 59, smallEligible: true })).eligible, false);
   assert.equal(smallZus(settings({ prevRevenue: 10000, prevDays: 60, smallEligible: false })).eligible, false);
-  assert.ok(validate(settings({ zusMode: 'small', smallEligible: false })).length);
+  assert.equal(validate(settings({ zusMode: 'small', smallEligible: false })).length, 0);
+  assert.ok(validate(settings({ zusMode: 'small', prevDays: 59, smallEligible: true })).length);
 });
 
 test('MZ+ FP begins at 4,806 basis, not automatically for every MZ+ user', () => {

@@ -51,7 +51,7 @@ Kolejność obliczeń:
 
 Przykład: przychód progresywny 120 000 zł, odliczenia 12 000 zł → przychody 100 000 / 20 000 → podstawy 90 000 / 18 000 → **9900 zł PIT**. Przesunięcie progu o odliczenia i wynik 9500 zł byłyby błędne.
 
-Kalkulator zachowuje pełną proporcję przychodów i zaokrągla kwoty odliczeń do groszy. Oficjalny formularz PIT-28 przewiduje również pola udziałów procentowych z dwoma miejscami po przecinku. Model planistyczny nie obiecuje identycznego wyniku z deklaracją co do złotego.
+Kalkulator zachowuje pełną proporcję przychodów i rozdziela groszowe reszty metodą największych reszt, aby nie zgubić ani nie stworzyć grosza łącznego odliczenia. Oficjalny formularz PIT-28 przewiduje również pola udziałów procentowych z dwoma miejscami po przecinku. Model planistyczny nie obiecuje identycznego wyniku z deklaracją co do złotego.
 
 **Prawo do ryczałtu w 2026:** limit przychodu poprzedniego roku wynosi 2 mln euro, czyli **8 517 200 zł przychodu 2025**. Wynika to z art. 6 ust. 4 i art. 4 ust. 2 oraz kursu EUR 4,2586 z tabeli NBP 190/A/NBP/2025 z 1 października 2025 r. Próg nie dotyczy prognozowanego przychodu bieżącego roku; rozpoczynający mają odrębną regułę. Kalkulator nie potwierdza automatycznie uprawnienia.
 
@@ -101,3 +101,14 @@ Tekst PIT zgłosił nieuwzględnioną jeszcze [zmianę DU/2026/1287](https://api
 [VER: Dz.U. 1997 nr 137 poz. 926, tekst ujednolicony Kancelarii Sejmu z 2026-10-08, api.sejm.gov.pl/eli, sprawdzono 2026-10-13]
 
 [VER: Dz.U. 2026 poz. 1287, tekst ogłoszony, api.sejm.gov.pl/eli, sprawdzono 2026-10-13]
+
+## Uzupełnienie niezależnego przeglądu v1.1 — 13.10.2026
+
+Ponownie odczytano przez `prawo.py` art. 9a, 23, 26, 30c i 30h PIT; art. 6, 8, 11, 12 i 31 ustawy ryczałtowej oraz art. 63 Ordynacji. Odczytano również limit M.P. 2025 poz. 1274 i zgłoszoną zmianę DU/2026/1287. Ta ostatnia dodaje art. 52zu od **1.11.2026** (inny przepis tej ustawy wszedł wcześniej); nie zmienia tu stawek PIT. Nie zastosowano brzmień przyszłych na 2027/2028.
+
+- **Społeczne przy kilku zeznaniach:** art. 26 ust. 1 pkt 2 i ust. 13a oraz art. 30c ust. 3 wykluczają podwójne odliczenie, ale nie wymagają utraty kwoty niewykorzystanej w JDG. Model wybiera społeczne najpierw w JDG, a resztę od własnego innego dochodu skali. W karcie społeczne nie obniżają decyzji, lecz mogą obniżyć własny dochód skali. Jest to jawna polityka kalkulatora; nie optymalizacja podziału według krańcowych stawek.
+- **Zdrowotna liniowego w KUP:** art. 23 ust. 1 pkt 58 dopuszcza koszt w limicie; dodatni dochód nie stanowi limitu kosztu. KUP może zwiększyć stratę. Odliczenie zdrowotnej od dochodu nadal nie przekracza dodatniej podstawy. Straty JDG nie odliczamy od etatu, a model nie wycenia przyszłego wykorzystania straty.
+- **Danina:** pomniejszają ją składki faktycznie odliczone od dochodów objętych daniną, nie składki już odliczone od przychodów ryczałtu. Do wyniku wpływa więc również odliczenie niezużytych społecznych od pozostałych dochodów.
+- **Dostępność:** deklaracja braku uprawnień wyklucza daną formę z rankingu. Stan „nie wiem” daje wynik warunkowy, nie potwierdzenie uprawnienia. Warunki branżowe, PKWiU, limit poprzedniego roku i termin wyboru nadal trzeba ustalić dla podatnika.
+
+[MF — odliczenie społecznych](https://www.podatki.gov.pl/ulgi-i-odliczenia/odliczenie-skladek-na-ubezpieczenie-spoleczne-pit), odczyt 13.10.2026, objaśnienie organu: potwierdza warunek własnej zapłaty, limit dochodu oraz zakaz składek odliczonych w innym zeznaniu (wprost przykłady PIT-37, PIT-28, PIT-36L). Szczegóły zmian i niezależnych testów: [TAX-REVIEW.md](TAX-REVIEW.md).

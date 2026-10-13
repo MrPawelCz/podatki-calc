@@ -93,3 +93,13 @@ Odczytano skryptem z API Sejmu: ustawa systemowa art. 17a, 18, 18a, 18c, 18d, 22
 Skrypt nie zgłosił ogłoszonych zmian pominiętych w pobranych tekstach. Zmiany przyszłe sygnalizowane w nagłówkach nie zmieniają użytych tutaj brzmień na 2026. Tekst ujednolicony jest narzędziem informacyjnym; źródłem prawa jest Dziennik Ustaw.
 
 Nie zautomatyzowano pełnego badania uprawnień, zbiegów tytułów, KRUS/ubezpieczeń zagranicznych, szczególnych zwolnień zdrowotnej, rozliczenia sprzedaży środków trwałych, remanentu, kasowego PIT ani proporcji dziennych społecznych. Kwoty wejściowe powinny odpowiadać właściwym przychodom i kosztom podatkowym dla modelowanego przypadku.
+
+## Uzupełnienie niezależnego przeglądu v1.1 — 13.10.2026
+
+Ponownie pobrano komunikaty ZUS o społecznych i zdrowotnej 2026 wymienione powyżej: potwierdzono podstawy 5 652 zł i 1 441,80 zł, wszystkie składniki miesięczne, 4 806 zł minimum, 432,54 zł zdrowotnej i trzy progi ryczałtu. Ponownie odczytano przez `prawo.py` art. 18c ustawy systemowej oraz art. 81 ustawy zdrowotnej.
+
+- **Ryczałt — brak podwójnego wykorzystania:** art. 81 ust. 2g nie pozwala pomniejszać przychodu progowego o społeczne już odliczone od dochodu w PIT. Przy automatycznym przeniesieniu niewykorzystanych składek na inne dochody skali silnik wyłącza tę część z odliczenia do progu zdrowotnej.
+- **Mały ZUS Plus — kwalifikacja a dane:** limit przychodu i co najmniej 60 dni są twardymi warunkami liczbowymi. Brak potwierdzenia pozostałych warunków jest stanem niepewności, nie błędem kwoty — wszystkie wyniki takiego scenariusza są warunkowe. Przy formularzu dochodu poprzedniego roku należy wprowadzać dochód do MZ+ po ustawowych korektach; jeżeli pozostaje strata/zero, zerowy dochód daje minimalną podstawę. Nie należy wpisywać ujemnej podstawy.
+- **Należne a zapłacone:** nowe poprawki nie usuwają wcześniej opisanego planistycznego założenia rocznych społecznych jako zapłaconych ani stałej zdrowotnej karty. Kalkulator nadal nie sporządza rzeczywistych przelewów miesięcznych.
+
+Pełna lista poprawek: [TAX-REVIEW.md](TAX-REVIEW.md).
