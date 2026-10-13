@@ -1,4 +1,4 @@
-# Weryfikacja wydania 1.2
+# Weryfikacja wydania 1.2.1
 
 Data: 13.10.2026. Wyłącznie fikcyjne scenariusze testowe.
 
@@ -16,9 +16,11 @@ Zestawy PIT/ZUS opracowano niezależnie od implementacji na ręcznie liczonych p
 
 ## Odbiór publicznej strony
 
-Przeglądarka Chromium 155, publiczny adres [GitHub Pages](https://mrpawelcz.github.io/podatki-calc/). **23/23 kontrole przeglądarkowe** ukończone 13.10.2026 o 13:35:22 UTC przez `npm run test:browser`:
+Przeglądarka Chromium 155, publiczny adres [GitHub Pages](https://mrpawelcz.github.io/podatki-calc/). **25/25 kontroli przeglądarkowych** ukończonych 13.10.2026 o 13:56:18 UTC przez `npm run test:browser`:
 
 - Neutralny pusty formularz, wczytanie przykładu i zgodność trzech wyników z testowanym silnikiem.
+- Powiadomienia po wczytaniu przykładu i zapisaniu danych nie przesuwają formularza; można je zamknąć. Usunięty dodatkowy pasek pod nagłówkiem.
+- Domyślne wyjaśnienie dostępności form znajduje się w zwijanych założeniach. Kwotowe różnice „mniej zostaje” są czerwone i pogrubione w każdym przegrywającym kafelku.
 - Konwersja miesiąc/rok bez zmiany rocznych wyników.
 - Dodanie i usunięcie przychodu.
 - Mały ZUS Plus: przekroczenie granicy przychodu blokuje wynik, poprawna wartość umożliwia obliczenie. W wersji 1.1 niepotwierdzone pozostałe uprawnienia oznaczają symulację warunkową, nie błąd liczbowy.
@@ -46,3 +48,5 @@ Testy potwierdzają opisany model, nie indywidualne prawo konkretnego podatnika 
 Wydanie 1.0 z 13.10.2026 miało 61 zaliczonych testów (32 PIT, 18 ZUS, 11 UI) oraz odbiór publicznej strony na desktopie i telefonie. Wersja 1.1 zastępuje tamten sposób prezentacji dostępności form i warunków MZ+.
 
 Wydanie 1.1 miało 86/86 testów i 19/19 kontroli publicznej strony. Wydanie 1.2 dodaje udostępnianie oraz objaśnienia stawek, bez zmiany silnika podatkowego.
+
+Wydanie 1.2.1 upraszcza komunikaty dostępności, przenosi powiadomienia poza układ formularza i wyróżnia niższe wyniki. Obliczenia podatkowe pozostają bez zmian.
