@@ -49,7 +49,7 @@ function renderResults(){
  const d=state.output==='month'?12:1,f=n=>fmt(n/d),best=result.ranking[0],second=result.ranking[1];
  $('revenue-summary').textContent=fmt(result.revenue);$('cost-summary').textContent=fmt(result.costs);
  const tie=second&&Math.abs(best.burden-second.burden)<1;
- $('recommendation').innerHTML=`<div class="recommend-label">${tie?'Wyniki są zbliżone':'Najmniejsze obciążenie przy Twoich danych'}</div><strong>${tie?`${best.name} i ${second.name}`:best.name}</strong><p>${tie?'Różnica poniżej 1 zł rocznie.':`${f(second.burden-best.burden)} ${d===12?'miesięcznie (średnio)':'rocznie'} więcej zostaje niż przy ${second.name.toLowerCase()}.`}</p>`;
+ $('recommendation').innerHTML=`<div class="recommend-label">${tie?'Wyniki są zbliżone':'Najmniejsze obciążenie przy Twoich danych'}</div><strong>${tie?`${best.name} i ${second.name}`:best.name}</strong><p>${tie?'Różnica poniżej 1 zł rocznie.':`${f(second.burden-best.burden)} ${d===12?'miesięcznie (średnio)':'rocznie'} więcej zostaje niż w wariancie „${second.name}”.`}</p>`;
  $('comparison').innerHTML=result.results.map(r=>resultCard(r,best,second)).join('');
  $('warnings').innerHTML=result.warnings.map(w=>`<p class="notice ${w.startsWith('Szacunek')?'info':''}">${esc(w)}</p>`).join('');
  $('breakdown-period').textContent=d===12?'Średnio miesięcznie':'Rocznie';
