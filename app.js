@@ -1,4 +1,6 @@
 import {calculate,defaults,example,parseAmount,annual,getPlan,smallZus,zusMonth,MONTHS,MODES,C,RATES} from './calculator.js?v=1.1.0';
+import {encodeShare,decodeShare} from './share.js?v=1.2.0';
+import {RATE_GUIDE,guideIntro} from './rates.js?v=1.2.0';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=new Intl.NumberFormat('pl-PL',{style:'currency',currency:'PLN',maximumFractionDigits:2});
@@ -11,6 +13,12 @@ const numeric={ 'start-months':'startMonths','accident':'accident','prev-revenue
 const selects={'zus-mode':'zusMode','prev-form':'prevForm','holiday':'holiday','health-treatment':'healthTreatment','linear-eligibility':'linearEligibility','lump-eligibility':'lumpEligibility'};
 const checks={'sickness':'sickness','fp-exempt':'fpExempt','small-eligible':'smallEligible','joint':'joint','paid-override':'paidOverride','card-enabled':'cardEnabled'};
 function status(text){$('status').textContent=text;}
+function clearSharedAddress(){if(location.hash.startsWith('#scenario')){history.replaceState(null,'',location.pathname+location.search);status('Zmieniono dane z linku. Aby udostępnić aktualną wersję, ponownie wybierz „Udostępnij”.');}}
+function loadShared(){
+ try{const shared=decodeShare(location.hash);if(!shared)return false;state=shared.state;showZero=shared.showZero;status('Wczytano dane z udostępnionego linku. Nie zmieniono Twojego zapisu na urządzeniu.');}
+ catch{state=defaults();showZero=false;status('Nie można odczytać danych z linku: jest uszkodzony albo pochodzi z nieobsługiwanej wersji. Wyświetlamy pusty formularz; Twój zapis na urządzeniu pozostaje bez zmian.');}
+ return true;
+}
 function reveal(id){const target=$(id);if(!target)return;let el=target;while(el){if(el.tagName==='DETAILS')el.open=true;el=el.parentElement;}const focusTarget=target.tagName==='DETAILS'?target.querySelector('summary'):target;focusTarget?.focus({preventScroll:true});target.scrollIntoView?.({block:target.matches('input,select,button')?'center':'start',behavior:'instant'});}
 function errorTarget(error){
  const stream=error.match(/Pozycja (\d+):/);if(stream)return `${error.includes('koszt')?'cost':error.includes('staw')?'rate':error.includes('okres')?'period':'rev'}-${Number(stream[1])-1}`;
@@ -27,13 +35,15 @@ function fieldValidation(){
  if(getPlan(state).includes('small')){if(state.prevDays<60)show('prev-days','Mały ZUS Plus wymaga co najmniej 60 dni działalności w 2025 roku.');if(state.prevRevenue>smallZus(state).limit)show('prev-revenue',`Przychód przekracza limit ${fmt(smallZus(state).limit)}. Wybierz inny wariant ZUS lub popraw dane.`);}
  if(state.healthTreatment==='cost'&&!state.paidOverride)show('paid-override','Włącz własne kwoty i wpisz zdrowotną zapłaconą w 2026 roku albo wybierz odliczenie od dochodu.');
 }
-function load(){try{const raw=localStorage.getItem(STORAGE);if(!raw)return;const saved=JSON.parse(raw);if(saved.version!==1||!saved.state||!Array.isArray(saved.state.streams))throw Error();const next={...defaults(),...saved.state};if(calculate(next).errors.length)throw Error();state=next;showZero=saved.showZero===true;status('Wczytano ustawienia zapisane na tym urządzeniu.');}catch{status('Zapisane ustawienia są nieczytelne lub niekompletne. Wczytano pusty formularz.');}}
-function rateOptions(selected){return [...RATES.filter(r=>r!==2).map(r=>[r,`${String(r).replace('.',',')}%`]),['progressive','8,5% / 12,5% — próg 100 tys.']].map(([value,label])=>`<option value="${value}" ${String(selected)===String(value)?'selected':''}>${label}</option>`).join('');}
+function load(){if(loadShared())return;try{const raw=localStorage.getItem(STORAGE);if(!raw)return;const saved=JSON.parse(raw);if(saved.version!==1||!saved.state||!Array.isArray(saved.state.streams))throw Error();const next={...defaults(),...saved.state};if(calculate(next).errors.length)throw Error();state=next;showZero=saved.showZero===true;status('Wczytano ustawienia zapisane na tym urządzeniu.');}catch{status('Zapisane ustawienia są nieczytelne lub niekompletne. Wczytano pusty formularz.');}}
+function rateOptions(selected){return RATE_GUIDE.map(({value,label})=>`<option value="${value}" ${String(selected)===String(value)?'selected':''}>${esc(label)}</option>`).join('');}
+function rateHelp(selected){const guide=RATE_GUIDE.find(r=>String(r.value)===String(selected));return guide?`<strong>${esc(guide.label)}</strong> ${esc(guide.description)} <a href="#rate-guide">Przykłady i wszystkie stawki</a>`:'';}
 function renderStreams(){
  $('streams').innerHTML=state.streams.map((s,i)=>`<article class="stream" data-index="${i}" aria-label="Przychód ${i+1}">
  <div class="stream-head"><div><label for="name-${i}">Rodzaj przychodu ${i+1}</label><input id="name-${i}" data-field="name" aria-label="Nazwa przychodu ${i+1}" maxlength="80" value="${esc(s.name)}" placeholder="Np. usługi, sprzedaż"></div><button class="remove" data-remove="${i}" aria-label="Usuń przychód ${i+1}" ${state.streams.length===1?'disabled':''}>×</button></div>
  <div class="field-grid"><div><label for="rev-${i}">Przychód (zł/${s.period==='month'?'mies.':'rok'})</label><input id="rev-${i}" data-field="revenue" inputmode="decimal" type="text" value="${inputValue(s.revenue)}" aria-describedby="stream-summary-${i}" data-number></div><div><label for="cost-${i}">Koszty (zł/${s.period==='month'?'mies.':'rok'})</label><input id="cost-${i}" data-field="cost" inputmode="decimal" type="text" value="${inputValue(s.cost)}" data-number></div></div>
- <div class="stream-bottom"><div><label for="rate-${i}">Stawka ryczałtu</label><select id="rate-${i}" data-field="rate">${rateOptions(s.rate)}</select></div><div><label for="period-${i}">Okres kwot</label><select id="period-${i}" data-field="period"><option value="month" ${s.period==='month'?'selected':''}>Miesiąc</option><option value="year" ${s.period==='year'?'selected':''}>Rok</option></select></div></div>
+ <div class="stream-bottom"><div><label for="rate-${i}">Stawka ryczałtu</label><select id="rate-${i}" data-field="rate" aria-describedby="rate-help-${i}">${rateOptions(s.rate)}</select></div><div><label for="period-${i}">Okres kwot</label><select id="period-${i}" data-field="period"><option value="month" ${s.period==='month'?'selected':''}>Miesiąc</option><option value="year" ${s.period==='year'?'selected':''}>Rok</option></select></div></div>
+ <p class="hint rate-help" id="rate-help-${i}">${rateHelp(s.rate)}</p>
  <p class="hint" id="stream-summary-${i}">Rocznie: ${fmt(annual(s,'revenue'))} przychodu · ${fmt(annual(s,'cost'))} kosztów</p></article>`).join('');
  $('streams-count').textContent=`${state.streams.length} / 30`;$('add-stream').disabled=state.streams.length>=30;
 }
@@ -105,8 +115,8 @@ function renderResults(){
  $('calculation').innerHTML=`<p class="hint">Wszystkie podstawy i odliczenia poniżej są roczne. ¹ Zmiana PIT to różnica podatku z działalnością względem osobnego rozliczenia innych dochodów bez JDG. Kwota może być ujemna, jeśli obniżasz PIT od innych dochodów lub korzystasz ze wspólnego rozliczenia.</p>${row('PIT innych dochodów bez JDG (punkt odniesienia)',result.baselinePit)}${result.results.map(r=>`<section class="calc-section"><h3>${r.name}</h3>${r.id==='card'?row('Podatek z decyzji przed odliczeniem (12 miesięcy)',state.cardTax*12):row('Podstawa PIT po odliczeniach',r.taxBase)}${row(r.id==='lump'?'Przychód do progu zdrowotnej (po społecznych)':'Dochód do zdrowotnej (karta: podstawa miesięczna)',r.healthBase)}${row(r.id==='card'?'Odliczenie zdrowotnej od podatku':'Zdrowotna uwzględniona w PIT',r.healthDeduction)}${r.id!=='card'?row('Inne odliczenia wykorzystane',r.otherDeduction):''}${r.businessPit!==undefined?row('Sam PIT z działalności',r.businessPit):''}${r.otherSocialDeduction?row('Społeczne odliczone od innych dochodów',r.otherSocialDeduction):''}${row('Cały PIT z uwzględnionych dochodów',r.totalPit)}${row('Cała danina z uwzględnionych dochodów',r.totalSolidarity)}${r.buckets?`<p class="hint">Przychody ryczałtu dzielimy na stawki przed proporcjonalnym rozliczeniem odliczeń.</p>${r.buckets.map(b=>row(`${String(b.rate).replace('.',',')}% — podstawa po odliczeniach`,b.taxable)).join('')}${row('Łączne wykorzystane odliczenia ryczałtu',r.totalDeduction)}<p class="hint">Próg zdrowotnej ${r.tier+1}/3; miesięczna składka ${fmt(r.monthlyHealth)}. Należność roczna jest liczona od rocznej podstawy — suma zaokrąglonych składek miesięcznych może różnić się o grosze.</p>`:''}</section>`).join('')}<p class="hint">Wakacje składkowe: ${fmt(result.zus.waived)} społecznych i FP/FS finansowanych przez państwo (nie odliczamy ich od PIT).</p>`;
 }
 function changePeriod(s,to){if(s.period===to)return;const multiplier=to==='year'?12:1/12;s.revenue*=multiplier;s.cost*=multiplier;s.period=to;}
-$('streams').addEventListener('input',e=>{const el=e.target,field=el.dataset.field;if(!field||el.tagName==='SELECT')return;const index=Number(el.closest('[data-index]').dataset.index);state.streams[index][field]=field==='name'?el.value:parseAmount(el.value);if(field!=='name'){el.setAttribute('aria-invalid',String(!Number.isFinite(state.streams[index][field])));const s=state.streams[index];el.closest('.stream').querySelector('.hint').textContent=`Rocznie: ${fmt(annual(s,'revenue'))} przychodu · ${fmt(annual(s,'cost'))} kosztów`;renderResults();}});
-$('streams').addEventListener('change',e=>{const el=e.target;if(el.tagName!=='SELECT')return;const s=state.streams[Number(el.closest('[data-index]').dataset.index)];if(el.dataset.field==='period')changePeriod(s,el.value);else s.rate=el.value==='progressive'?el.value:Number(el.value);renderStreams();renderResults();});
+$('streams').addEventListener('input',e=>{const el=e.target,field=el.dataset.field;if(!field||el.tagName==='SELECT')return;const index=Number(el.closest('[data-index]').dataset.index);state.streams[index][field]=field==='name'?el.value:parseAmount(el.value);if(field!=='name'){el.setAttribute('aria-invalid',String(!Number.isFinite(state.streams[index][field])));const s=state.streams[index];$(`stream-summary-${index}`).textContent=`Rocznie: ${fmt(annual(s,'revenue'))} przychodu · ${fmt(annual(s,'cost'))} kosztów`;renderResults();}});
+$('streams').addEventListener('change',e=>{const el=e.target;if(el.tagName!=='SELECT')return;const focusId=el.id,s=state.streams[Number(el.closest('[data-index]').dataset.index)];if(el.dataset.field==='period')changePeriod(s,el.value);else s.rate=el.value==='progressive'?el.value:Number(el.value);renderStreams();renderResults();$(focusId)?.focus({preventScroll:true});});
 $('streams').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b||state.streams.length<2)return;state.streams.splice(Number(b.dataset.remove),1);renderStreams();renderResults();$('add-stream').focus();});
 $('add-stream').addEventListener('click',()=>{if(state.streams.length>=30)return;state.streams.push({name:`Przychód ${state.streams.length+1}`,revenue:0,cost:0,rate:8.5,period:state.period});renderStreams();renderResults();$('streams').lastElementChild.querySelector('input').focus();});
 document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click',()=>{state.period=b.dataset.period;state.streams.forEach(s=>changePeriod(s,state.period));syncControls();status('Zmieniono okres i przeliczono kwoty. Roczne wyniki pozostają takie same.');}));
@@ -115,15 +125,37 @@ for(const [id,key]of Object.entries(numeric))$(id).addEventListener('input',()=>
 for(const [id,key]of Object.entries(checks))$(id).addEventListener('change',()=>{state[key]=$(id).checked;renderResults();});
 for(const [id,key]of Object.entries(selects))$(id).addEventListener('change',()=>{if(key==='zusMode'&&$(id).value==='custom')state.months=getPlan(state);state[key]=key==='holiday'?Number($(id).value):$(id).value;if(key==='zusMode'&&state.zusMode==='custom')$('month-plan-details').open=true;renderResults();});
 $('month-plan').addEventListener('change',e=>{const i=Number(e.target.dataset.month);if(!Number.isInteger(i))return;state.months=getPlan(state);state.months[i]=e.target.value;state.zusMode='custom';$('zus-mode').value='custom';renderResults();});
-$('example').addEventListener('click',()=>{showZero=false;state=example();syncControls();status('Wczytano fikcyjny przykład: usługi IT i sprzedaż towarów. Nie zapisano go na urządzeniu.');});
+$('example').addEventListener('click',()=>{clearSharedAddress();showZero=false;state=example();syncControls();status('Wczytano fikcyjny przykład: usługi IT i sprzedaż towarów. Nie zapisano go na urządzeniu.');});
 $('save').addEventListener('click',()=>{if(calculate(state).errors.length){status('Najpierw popraw dane. Nie zapisano niepełnego scenariusza.');return;}try{localStorage.setItem(STORAGE,JSON.stringify({version:1,state,showZero}));status('Zapisano lokalnie na tym urządzeniu. Ustawienia wczytają się po ponownym otwarciu.');}catch{status('Przeglądarka blokuje lokalny zapis. Możesz zachować wynik jako PDF.');}});
-$('reset').addEventListener('click',()=>{showZero=false;state=defaults();try{localStorage.removeItem(STORAGE);}catch{}syncControls();document.querySelectorAll('[aria-invalid]').forEach(el=>el.removeAttribute('aria-invalid'));status('Wyczyszczono formularz i zapis z tego urządzenia.');});
+$('reset').addEventListener('click',()=>{clearSharedAddress();showZero=false;state=defaults();try{localStorage.removeItem(STORAGE);}catch{}syncControls();document.querySelectorAll('[aria-invalid]').forEach(el=>el.removeAttribute('aria-invalid'));status('Wyczyszczono formularz i zapis z tego urządzenia.');});
+$('share').addEventListener('click',()=>{
+ if(calculate(state).errors.length){status('Najpierw popraw dane. Link nie został utworzony.');reveal('errors');return;}
+ try{
+  const url=new URL(location.href);url.search='';url.hash=encodeShare(state,showZero);
+  $('share-link').value=url.href;$('share-status').textContent='';$('share-native').hidden=typeof navigator.share!=='function';
+  $('share-dialog').showModal();
+ }catch{status('Nie udało się utworzyć linku. Sprawdź dane i spróbuj ponownie.');}
+});
+$('share-copy').addEventListener('click',async()=>{
+ try{await navigator.clipboard.writeText($('share-link').value);$('share-status').textContent='Link skopiowany. Możesz wkleić go w wiadomości.';}
+ catch{$('share-link').focus();$('share-link').select();$('share-status').textContent='Przeglądarka nie pozwoliła skopiować linku automatycznie. Zaznaczyliśmy go — skopiuj ręcznie.';}
+});
+$('share-native').addEventListener('click',async()=>{
+ try{await navigator.share({title:'Podatki Calc — porównanie 2026',url:$('share-link').value});$('share-status').textContent='Przekazano link do wybranej aplikacji.';}
+ catch(error){$('share-status').textContent=error.name==='AbortError'?'Anulowano udostępnianie. Link jest nadal dostępny.':'Nie udało się udostępnić. Użyj przycisku „Kopiuj link”.';}
+});
+$('share-close').addEventListener('click',()=>$('share-dialog').close());
+window.addEventListener('hashchange',()=>{if(loadShared()){if($('share-dialog').open)$('share-dialog').close();syncControls();}});
+for(const event of ['input','change'])$('inputs').addEventListener(event,clearSharedAddress,true);
+document.addEventListener('click',e=>{if(e.target.closest('[data-period],[data-output],[data-remove],[data-zero],#add-stream'))clearSharedAddress();},true);
 let printDetails=[];
 window.addEventListener('beforeprint',()=>{printDetails=[...document.querySelectorAll('details')].map(d=>[d,d.open]);printDetails.forEach(([d])=>d.open=true);});
 window.addEventListener('afterprint',()=>{printDetails.forEach(([d,open])=>d.open=open);});
 $('print').addEventListener('click',()=>window.print());
 document.addEventListener('click',e=>{const action=e.target.closest('[data-reveal],[data-example],[data-zero],a[href^="#"]');if(!action)return;if(action.dataset.reveal){reveal(action.dataset.reveal);}else if(action.hasAttribute('data-example')){$('example').click();}else if(action.hasAttribute('data-zero')){showZero=true;renderResults();}else if(action.hash){e.preventDefault();reveal(action.hash.slice(1));}});
 $('holiday').innerHTML+='<option value="0">Styczeń</option>'+MONTHS.slice(1).map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+$('rate-guide').querySelector('.hint').textContent=guideIntro+' Różne czynności w jednej firmie mogą mieć różne stawki.';
+$('rate-guide-content').innerHTML=RATE_GUIDE.map(r=>`<div><dt>${esc(r.label)}</dt><dd><p>${esc(r.description)}</p><p>${esc(r.examples)}</p></dd></div>`).join('');
 $('method-content').innerHTML=`<div class="method-grid">
  <div><h3>Co porównujemy</h3><p>Cały 2026 rok aktywnej JDG w Polsce: skalę 12%/32%, liniowy 19%, ryczałt według wskazanych stawek oraz opcjonalnie kartę (kontynuacja). Ryczałt ignoruje koszty przy podatku, ale uwzględnia je w kwocie „zostaje”. Kwoty miesięczne wyników są średnią roczną, nie zaliczką PIT ani przelewem do ZUS.</p><p>Inne dochody na skali wpływają na progi, wspólne rozliczenie i daninę. Nie dodajemy ich do kwoty pozostającej z działalności.</p></div>
  <div><h3>ZUS i ulgi</h3><p>Pełny ZUS: 1 926,76 zł/mies. z chorobowym i FP/FS przy wypadkowym 1,67%. Preferencyjny: 456,18 zł z chorobowym. Ulga na start: bez społecznych. MZ+ wyliczamy z dochodu poprzedniego roku; podstawa od 1 441,80 do 5 652 zł. FP/FS nie odlicza się od przychodu ryczałtu. Wakacje tylko po świadomym wyborze miesiąca.</p><p>Ulga na start i preferencja: sprawdź m.in. 60 miesięcy od poprzedniej działalności i wykonywanie usług dla byłego pracodawcy. MZ+: co najmniej 60 dni w 2025, limit proporcjonalny do 120 tys. zł oraz pozostałe wyłączenia. Od 2026 nowe okresy 36/60 miesięcy.</p></div>

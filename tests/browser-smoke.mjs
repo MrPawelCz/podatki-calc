@@ -68,6 +68,51 @@ try{
     const before=await page.locator('.net-value').allTextContents();await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('.net-value').first().waitFor();assert.deepEqual(await page.locator('.net-value').allTextContents(),before);
   });
+  await check('rate descriptions follow the selected rate and keep keyboard focus',async()=>{
+    await page.locator('#rate-0').selectOption('14');
+    assert.match(await page.locator('#rate-help-0').textContent(),/zdrow|medycz/i);
+    assert.equal(await page.evaluate(()=>document.activeElement.id),'rate-0');
+    await page.locator('#rate-help-0 a').click();
+    assert.equal(await page.locator('#rate-guide').evaluate(el=>el.open),true);
+    assert.equal(await page.locator('#rate-guide-content dt').count(),9);
+    await page.locator('#rate-guide > summary').click();
+    await page.locator('#example').click();
+  });
+  await check('share copies a snapshot and another page restores it without overwriting local data',async()=>{
+    await page.locator('#name-0').fill('Łódź — usługi 🦾');await page.locator('#rev-0').fill('23000,25');
+    await page.locator('[data-output=month]').click();
+    const expected=await page.locator('.net-value').allTextContents();
+    const persisted=await page.evaluate(()=>localStorage.getItem('podatki-calc-2026-v1'));
+    await page.locator('#share').click();
+    assert.equal(await page.evaluate(()=>document.activeElement.id),'share-copy');
+    const shared=await page.locator('#share-link').inputValue();assert.ok(new URL(shared).hash.startsWith('#scenario='));
+    assert.equal(new URL(shared).search,'');
+    await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:new URL(url).origin});
+    await page.locator('#share-copy').click();
+    await page.waitForFunction(()=>document.getElementById('share-status').textContent.includes('Link skopiowany'));
+    assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),shared);
+    const recipient=await context.newPage();recipient.on('pageerror',e=>pageErrors.push(e.message));
+    const requests=[];recipient.on('request',request=>requests.push(request.url()));
+    await recipient.goto(shared,{waitUntil:'domcontentloaded'});await recipient.locator('.net-value').first().waitFor();
+    assert.equal(await recipient.locator('#name-0').inputValue(),'Łódź — usługi 🦾');
+    assert.equal(await recipient.locator('#rev-0').inputValue(),'23000,25');
+    assert.deepEqual(await recipient.locator('.net-value').allTextContents(),expected);
+    assert.equal(await recipient.evaluate(()=>localStorage.getItem('podatki-calc-2026-v1')),persisted);
+    assert.ok(requests.every(request=>!request.includes('scenario=')));
+    assert.ok(requests.every(request=>new URL(request).origin===new URL(url).origin));
+    await recipient.locator('#reset').click();assert.equal(new URL(recipient.url()).hash,'');
+    await recipient.reload({waitUntil:'domcontentloaded'});await recipient.locator('#recommendation').waitFor();
+    assert.equal(await recipient.locator('.tax-card.best').count(),0);
+    await recipient.close();await page.keyboard.press('Escape');
+    assert.equal(await page.evaluate(()=>document.activeElement.id),'share');
+    await page.locator('#example').click();
+  });
+  await check('malformed share is rejected without executing markup or showing unrelated figures',async()=>{
+    const recipient=await context.newPage();recipient.on('pageerror',e=>pageErrors.push(e.message));
+    await recipient.goto(url+'#scenario=corrupt',{waitUntil:'domcontentloaded'});await recipient.locator('#recommendation').waitFor();
+    assert.match(await recipient.locator('#status').textContent(),/Nie można odczytać/);
+    assert.equal(await recipient.locator('.tax-card.best').count(),0);await recipient.close();
+  });
   await check('desktop has no horizontal overflow',async()=>{assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);});
   await page.screenshot({path:new URL('desktop.png',out).pathname,timeout:30000});
   for(const width of [320,375,390,768,1024]){
@@ -78,6 +123,14 @@ try{
   }
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:new URL('mobile.png',out).pathname,timeout:30000});
+  await check('share dialog fits mobile, is accessible and restores focus on Escape',async()=>{
+    await page.locator('#share').click();
+    const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+    assert.deepEqual(audit.violations.map(v=>v.id),[]);
+    await page.screenshot({path:new URL('share-mobile.png',out).pathname,timeout:30000});
+    for(const width of [320,390]){await page.setViewportSize({width,height:844});assert.ok(await page.locator('#share-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth));}
+    await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>document.activeElement.id),'share');
+  });
   await check('mobile comparison jump reaches the result area',async()=>{
     await page.locator('#mobile-results-link').click();
     await page.locator('#results').waitFor();

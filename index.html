@@ -5,15 +5,15 @@
   <meta name="theme-color" content="#f3f5f4">
   <meta name="description" content="Porównaj skalę podatkową, podatek liniowy i ryczałt w 2026 roku. Kilka przychodów, koszty, ulgi ZUS i przejrzyste obliczenia.">
   <title>Podatki Calc — Twoja działalność, w liczbach</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css?v=1.1.0">
-  <script type="module" src="app.js?v=1.1.0"></script>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css?v=1.2.0">
+  <script type="module" src="app.js?v=1.2.0"></script>
 </head>
 <body>
 <a class="skip" href="#results">Przejdź do porównania</a>
 <div class="container">
   <header>
     <a class="brand" href="./" aria-label="Podatki Calc — strona główna"><img src="favicon.svg" width="42" height="42" alt=""><span><span class="brand-title">Podatki Calc <span class="badge">PL · 2026</span></span><span class="subtitle">Twoja działalność, w liczbach.</span></span></a>
-    <nav aria-label="Narzędzia kalkulatora"><button id="example">Przykład</button><button id="save">Zapisz na urządzeniu</button><button id="print">PDF / drukuj</button><button id="reset" class="quiet">Wyczyść</button></nav>
+    <nav aria-label="Narzędzia kalkulatora"><button id="example">Przykład</button><button id="share">Udostępnij</button><button id="save">Zapisz na urządzeniu</button><button id="print">PDF / drukuj</button><button id="reset" class="quiet">Wyczyść</button></nav>
   </header>
   <p id="status" class="status" role="status" aria-atomic="true"></p>
   <div class="workspace-title"><p>Porównaj, ile zostanie w Twojej firmie.</p><a href="#methodology">Zasady i źródła</a></div>
@@ -30,6 +30,7 @@
       <div id="streams"></div>
       <button id="add-stream" class="add"><span aria-hidden="true">＋</span> Dodaj rodzaj przychodu</button>
       <p class="hint">Stawkę ryczałtu dobierz do faktycznej działalności i PKWiU; nazwa pozycji nie ustala stawki.</p>
+      <details class="rate-guide" id="rate-guide"><summary>Która stawka ryczałtu? Opisy i przykłady</summary><div class="details-body"><p class="hint">To skrócona ściąga, nie pełny katalog. Liczy się rzeczywisty zakres usług i właściwe PKWiU, nie sama nazwa zawodu czy kod PKD. Różne czynności w jednej firmie mogą mieć różne stawki.</p><dl id="rate-guide-content"></dl><p class="hint">Najem prywatny jest poza zakresem tego kalkulatora. <a href="https://github.com/MrPawelCz/podatki-calc/blob/main/docs/RYCZALT-GUIDE.md" target="_blank" rel="noopener noreferrer">Źródła i szczegóły kwalifikacji stawek</a> · sprawdzono 13.10.2026.</p></div></details>
       <div class="annual-summary"><span>W skali roku</span><span>Przychód <strong id="revenue-summary">—</strong></span><span>Koszty <strong id="cost-summary">—</strong></span></div>
 
       <details open class="section"><summary><span>ZUS społeczny</span><span id="zus-summary" class="summary-value"></span></summary><div class="details-body">
@@ -90,11 +91,19 @@
       <div class="panel breakdown" id="breakdown-panel"><div class="section-head"><h2>Gdzie trafiają Twoje pieniądze</h2><span class="subtle" id="breakdown-period">Rocznie</span></div><div class="legend"><span><i class="net"></i>Zostaje</span><span><i class="costs"></i>Koszty</span><span><i class="social"></i>ZUS + FP</span><span><i class="health"></i>Zdrowotna</span><span><i class="tax"></i>PIT + danina</span></div><div id="bars"></div><p class="hint">Proporcje nieujemnych składników. Przy stracie lub oszczędności podatkowej pasek nie jest bilansem przychodu. Pełne wartości, także ujemną zmianę PIT lub daniny, pokazują karty.</p></div>
       <details class="panel calculation" id="calculation-panel"><summary>Jak powstał wynik? <span class="subtle">Podstawy i odliczenia</span></summary><div id="calculation"></div></details>
 
-      <div class="privacy"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M6 10V7a6 6 0 0112 0v3M5 10h14v11H5z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><p>Twoje kwoty pozostają w przeglądarce. Bez konta, bez analityki. Zapis tylko po kliknięciu „Zapisz na urządzeniu”.</p></div>
+      <div class="privacy"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M6 10V7a6 6 0 0112 0v3M5 10h14v11H5z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><p>Obliczenia pozostają w przeglądarce. Bez konta i analityki; zapis na urządzeniu tylko na żądanie. „Udostępnij” tworzy link z wpisanymi danymi — zobaczy je każdy, komu go przekażesz.</p></div>
     </section>
   </main>
   <details id="methodology" class="panel methodology"><summary><span>Zasady, aktualność i źródła</span><span class="badge">Sprawdzono 13.10.2026</span></summary><div id="method-content"></div></details>
-  <footer><span>Podatki Calc · v1.1.0 · Polska, 2026</span><a href="https://github.com/MrPawelCz/podatki-calc" target="_blank" rel="noopener noreferrer">Kod i dokumentacja</a><a href="https://mrpawelcz.github.io/btl-calc/" target="_blank" rel="noopener noreferrer">BTL Calculator</a></footer>
+  <footer><span>Podatki Calc · v1.2.0 · Polska, 2026</span><a href="https://github.com/MrPawelCz/podatki-calc" target="_blank" rel="noopener noreferrer">Kod i dokumentacja</a><a href="https://mrpawelcz.github.io/btl-calc/" target="_blank" rel="noopener noreferrer">BTL Calculator</a></footer>
 </div>
+<dialog id="share-dialog" aria-labelledby="share-title" aria-describedby="share-description">
+  <h2 id="share-title">Udostępnij swoje porównanie</h2>
+  <p id="share-description">Link odtworzy wszystkie wpisane kwoty, przychody i ustawienia. Każdy, kto ma link, może je zobaczyć. Nie zapisujemy ich w osobnej bazie.</p>
+  <label for="share-link">Link do tego scenariusza</label><textarea id="share-link" rows="3" readonly spellcheck="false" aria-describedby="share-snapshot"></textarea>
+  <p class="hint" id="share-snapshot">Link zachowuje dane z chwili utworzenia. Po zmianach wygeneruj nowy. Odbiorca może edytować własną kopię; wynik przelicza kalkulator dla 2026 roku.</p>
+  <div class="share-actions"><button id="share-copy" class="primary" autofocus>Kopiuj link</button><button id="share-native" hidden>Wyślij przez…</button><button id="share-close" class="quiet">Zamknij</button></div>
+  <p id="share-status" role="status" aria-live="polite"></p>
+</dialog>
 <noscript>Włącz JavaScript, aby korzystać z kalkulatora. Obliczenia wykonywane są lokalnie w Twojej przeglądarce.</noscript>
 </body></html>
