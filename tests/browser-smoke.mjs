@@ -54,6 +54,15 @@ try{
     await page.locator('#prev-revenue').fill('120000');await page.locator('#small-eligible').check();
     assert.equal(await page.locator('.tax-card').count(),3);
   });
+  await check('unavailable forms cannot win the public comparison',async()=>{
+    await page.locator('#example').click();
+    await page.locator('.eligibility-label').first().click();
+    assert.equal(await page.locator('#eligibility-settings').evaluate(el=>el.open),true);
+    await page.locator('#linear-eligibility').selectOption('ineligible');
+    await page.locator('#lump-eligibility').selectOption('ineligible');
+    assert.equal(await page.locator('.tax-card.excluded').count(),2);
+    assert.equal(await page.locator('.tax-card.best h3').textContent(),'Skala');
+  });
   await page.locator('#example').click();
   await check('save and reload preserve figures in the isolated browser only',async()=>{
     const before=await page.locator('.net-value').allTextContents();await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});
