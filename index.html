@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f3f5f4">
+  <meta name="description" content="Porównaj skalę podatkową, podatek liniowy i ryczałt w 2026 roku. Kilka przychodów, koszty, ulgi ZUS i przejrzyste obliczenia.">
+  <title>Podatki Calc — Twoja działalność, w liczbach</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+<a class="skip" href="#results">Przejdź do porównania</a>
+<div class="container">
+  <header>
+    <a class="brand" href="./" aria-label="Podatki Calc — strona główna"><img src="favicon.svg" width="42" height="42" alt=""><span><span class="brand-title">Podatki Calc <span class="badge">PL · 2026</span></span><span class="subtitle">Twoja działalność, w liczbach.</span></span></a>
+    <nav aria-label="Narzędzia kalkulatora"><button id="example">Przykład</button><button id="save">Zapisz na urządzeniu</button><button id="print">PDF / drukuj</button><button id="reset" class="quiet">Wyczyść</button></nav>
+  </header>
+  <p id="status" class="status" role="status"></p>
+  <div class="workspace-title"><p>Wybierz formę opodatkowania</p><a href="#methodology">Zasady i źródła <span aria-hidden="true">↗</span></a></div>
+  <a class="mobile-results" href="#results">Zobacz porównanie ↓</a>
+  <main class="workspace">
+    <section class="inputs panel" aria-labelledby="inputs-heading">
+      <div class="section-head"><h1 id="inputs-heading">Twoja działalność</h1><span class="subtle">Rok 2026</span></div>
+      <div class="period-row"><span>Wprowadzaj kwoty</span><div class="segmented" role="group" aria-label="Okres kwot"><button data-period="month" aria-pressed="true">Miesięcznie</button><button data-period="year" aria-pressed="false">Rocznie</button></div></div>
+      <p class="hint">Przełączenie przelicza kwoty ×12 lub ÷12. Każdy przychód może mieć własny okres. Model obejmuje pełny rok działalności.</p>
+      <div class="section-head compact"><h2>Przychody i koszty</h2><span id="streams-count" class="subtle"></span></div>
+      <p class="hint">Kwoty bez VAT podlegającego odliczeniu. Koszty bez ZUS i zdrowotnej — doliczymy je osobno.</p>
+      <div id="streams"></div>
+      <button id="add-stream" class="add">＋ Dodaj rodzaj przychodu</button>
+      <p class="hint">Stawkę ryczałtu dobierz do faktycznej działalności i PKWiU; nazwa pozycji nie ustala stawki.</p>
+      <div class="annual-summary"><span>W skali roku</span><span>Przychód <strong id="revenue-summary">—</strong></span><span>Koszty <strong id="cost-summary">—</strong></span></div>
+
+      <details open class="section"><summary><span>ZUS społeczny</span><span id="zus-summary" class="summary-value"></span></summary><div class="details-body">
+        <label for="zus-mode">Wariant składek</label><select id="zus-mode"><option value="full">Pełny ZUS</option><option value="preferential">Preferencyjny ZUS</option><option value="start">Ulga na start → preferencyjny</option><option value="small">Mały ZUS Plus</option><option value="employment">Bez społecznych z JDG — inny tytuł</option><option value="custom">Własny plan miesięczny</option></select>
+        <p id="zus-hint" class="hint"></p>
+        <div id="start-fields" hidden><label for="start-months">Miesiące ulgi na start pozostałe od stycznia</label><input id="start-months" type="number" min="0" max="7" step="1" value="6"><p class="hint">Zwykle do 6 pełnych miesięcy. 7 tylko gdy pierwszy niepełny miesiąc przypada w styczniu. Pozostałe miesiące: preferencyjny ZUS.</p></div>
+        <div id="small-fields" hidden class="inset">
+          <h3>Dane za 2025 rok</h3><div class="field-grid"><div><label for="prev-revenue">Przychód roczny (zł)</label><input id="prev-revenue" type="text" inputmode="decimal" value="100000" data-number></div><div><label for="prev-income">Dochód roczny (zł)</label><input id="prev-income" type="text" inputmode="decimal" value="60000" data-number></div></div>
+          <label for="prev-form">Forma opodatkowania w 2025</label><select id="prev-form"><option value="income">Skala / liniowy</option><option value="lump">Ryczałt (dochód = 50% przychodu)</option><option value="card">Karta z VAT (dochód = 50% przychodu)</option></select>
+          <label for="prev-days">Dni prowadzenia działalności w 2025</label><input id="prev-days" type="number" min="1" max="365" value="365">
+          <p class="hint">Dochód do MZ+: dolicz społeczne ujęte w kosztach. Limit przychodu 120 000 zł jest proporcjonalny do dni działalności.</p>
+          <label class="check"><input id="small-eligible" type="checkbox"><span>Spełniam pozostałe warunki Małego ZUS Plus, w tym limit miesięcy i brak prawa do preferencyjnych składek.</span></label>
+          <p id="small-info" class="hint"></p>
+        </div>
+        <label class="check"><input id="sickness" type="checkbox" checked><span>Dobrowolne chorobowe</span></label>
+        <label class="check"><input id="fp-exempt" type="checkbox"><span>Zwolnienie z FP/FS (np. wiek 55 lat kobieta / 60 lat mężczyzna)</span></label>
+        <label for="accident">Stawka wypadkowa (%)</label><input id="accident" type="number" min="0.1" max="10" step="0.01" value="1.67">
+        <label for="holiday">Wakacje składkowe — przyznany miesiąc</label><select id="holiday"><option value="-1">Nie korzystam</option></select><p class="hint">Zwalniają z własnych społecznych i FP/FS, nie ze zdrowotnej. Finansowanych przez państwo składek nie odliczamy.</p>
+        <details class="nested"><summary>Plan ZUS: styczeń–grudzień</summary><div id="month-plan" class="month-plan"></div><p class="hint">Zmiana pojedynczego miesiąca włącza własny plan. „Bez społecznych” nie wyłącza zdrowotnej. Plan nie obsługuje zawieszenia ani niepełnego roku.</p></details>
+      </div></details>
+
+      <details class="section"><summary><span>Inne dochody i rodzina</span><span class="summary-value">Opcjonalnie</span></summary><div class="details-body">
+        <label for="other-income">Twój inny dochód na skali — rocznie (zł)</label><input id="other-income" type="text" inputmode="decimal" value="0" data-number><p class="hint">Podstawa PIT po kosztach i społecznych, np. z etatu. Nie wynagrodzenie brutto ani netto. Uwzględnimy wykorzystany próg i kwotę wolną, nie liczymy listy płac.</p>
+        <label class="check"><input id="joint" type="checkbox"><span>Porównaj wspólne rozliczenie z małżonkiem na skali (spełniamy warunki)</span></label>
+        <div id="spouse-fields" hidden><label for="spouse-income">Dochód małżonka na skali — rocznie (zł)</label><input id="spouse-income" type="text" inputmode="decimal" value="0" data-number><p class="hint">Liniowy i ryczałt z aktywnej JDG: osobne rozliczenie. Małżonek wyłącznie z dochodami opodatkowanymi skalą, bez aktywnego liniowego/ryczałtu z JDG.</p></div>
+      </div></details>
+
+      <details class="section"><summary><span>Odliczenia i dokładność</span><span class="summary-value">Zaawansowane</span></summary><div class="details-body">
+        <label for="deduction">Inne odliczenia od dochodu/przychodu JDG (zł/rok)</label><input id="deduction" type="text" inputmode="decimal" value="0" data-number><p class="hint">Tylko kwoty przysługujące w każdej porównywanej formie (np. kwalifikowane IKZE). Bez strat z lat ubiegłych, ulg od podatku, ulg dziecięcych i PIT-0. Nie przenosimy niewykorzystanej kwoty na inne dochody.</p>
+        <label for="health-treatment">Zdrowotna na liniowym</label><select id="health-treatment"><option value="deduction">Odliczana od dochodu (PIT i danina, nie zdrowotna)</option><option value="cost">Zaliczana do kosztów — wymaga kwoty zapłaconej</option></select>
+        <label class="check"><input id="paid-override" type="checkbox"><span>Podaj faktycznie zapłaconą zdrowotną zamiast szacunku</span></label>
+        <div id="paid-fields" hidden><div class="field-grid"><div><label for="paid-linear">Liniowy (zł/rok)</label><input id="paid-linear" type="text" inputmode="decimal" value="0" data-number></div><div><label for="paid-lump">Ryczałt (zł/rok)</label><input id="paid-lump" type="text" inputmode="decimal" value="0" data-number></div></div><p class="hint">Zapłacone w 2026, z uwzględnieniem zwrotów. Zmieniają odliczenie PIT (i podstawę zdrowotnej, gdy KUP), nie zastępują rocznej składki należnej.</p></div>
+        <p class="hint">Domyślnie szacujemy zapłaconą zdrowotną jako należną roczną. To porównanie ekonomiczne, nie harmonogram przelewów ani deklaracja. Społeczne przyjmujemy zapłacone w kwocie planu.</p>
+        <label class="check"><input id="card-enabled" type="checkbox"><span>Pokaż też kartę podatkową — wyłącznie kontynuacja</span></label>
+        <div id="card-fields" hidden><label for="card-tax">Miesięczny podatek z decyzji US (zł)</label><input id="card-tax" type="text" inputmode="decimal" value="0" data-number><p class="hint">Nie można jej wybrać jako nowej formy. Wpisz podatek przed odliczeniem zdrowotnej. Porównanie karty bez wspólnego rozliczenia; zakładamy zdrowotną zapłaconą równą należnej.</p></div>
+      </div></details>
+    </section>
+
+    <section id="results" class="results" aria-labelledby="results-heading" tabindex="-1">
+      <div class="panel result-top"><div class="section-head"><h2 id="results-heading">Porównanie opodatkowania</h2><div class="segmented" role="group" aria-label="Okres wyników"><button data-output="year" aria-pressed="true">Rok</button><button data-output="month" aria-pressed="false">Miesiąc</button></div></div>
+        <div id="recommendation" class="recommendation" aria-live="polite"></div>
+        <p class="hint">Najmniejsze obciążenie w podanych założeniach. Dostępność formy i stawki wymaga dopasowania do działalności.</p>
+        <div id="errors" role="alert"></div><div id="warnings"></div>
+      </div>
+      <div id="comparison" class="comparison"></div>
+      <div class="panel breakdown"><div class="section-head"><h2>Gdzie trafiają Twoje pieniądze</h2><span class="subtle" id="breakdown-period">Rocznie</span></div><div class="legend"><span><i class="net"></i>Zostaje</span><span><i class="costs"></i>Koszty</span><span><i class="social"></i>ZUS + FP</span><span><i class="health"></i>Zdrowotna</span><span><i class="tax"></i>PIT + danina</span></div><div id="bars"></div><p class="hint">Podział przychodu JDG. Przy stracie pasek pokazuje proporcje wydatków. Wspólne rozliczenie może dawać ujemny przyrost PIT — to oszczędność gospodarstwa.</p></div>
+      <details class="panel calculation"><summary>Jak powstał wynik? <span class="subtle">Podstawy i odliczenia</span></summary><div id="calculation"></div></details>
+
+      <div class="privacy"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M6 10V7a6 6 0 0112 0v3M5 10h14v11H5z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><p>Twoje kwoty pozostają w przeglądarce. Bez konta, bez analityki. Zapis tylko po kliknięciu „Zapisz na urządzeniu”.</p></div>
+    </section>
+  </main>
+  <section id="methodology" class="panel methodology"><div class="section-head"><h2>Zasady, aktualność i źródła</h2><span class="badge">Sprawdzono 13.10.2026</span></div><div id="method-content"></div></section>
+  <footer><span>Podatki Calc · v1.0 · Polska, 2026</span><a href="https://github.com/MrPawelCz/podatki-calc" target="_blank" rel="noopener noreferrer">Kod i dokumentacja</a><a href="https://mrpawelcz.github.io/btl-calc/" target="_blank" rel="noopener noreferrer">BTL Calculator</a></footer>
+</div>
+<noscript>Włącz JavaScript, aby korzystać z kalkulatora. Obliczenia wykonywane są lokalnie w Twojej przeglądarce.</noscript>
+</body></html>
